@@ -1,0 +1,1709 @@
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2321342c'/%3E%3Crect x='18' y='18' width='28' height='28' rx='6' fill='%23e8762c' transform='rotate(8 32 32)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+  :root{
+    --paper: #21342c;
+    --paper-soft: #2a4338;
+    --bg-grid: #2a4338;
+    --panel-2: #1a2922;
+    --well: #15211b;
+    --ink: #f3efe4;
+    --ink-soft: #9fb6a8;
+    --ink-faint: #6c8377;
+    --rule: #3a5546;
+    --cyan: #e8762c;
+    --cyan-soft: rgba(232,118,44,0.18);
+    --magenta: #e8762c;
+    --magenta-soft: rgba(232,118,44,0.14);
+    --trim: #e85c4a;
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--paper);}
+  .bw-root{
+    background:
+      repeating-linear-gradient(0deg, var(--bg-grid) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, var(--bg-grid) 0 1px, transparent 1px 28px),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    padding:0;
+    min-height:100%;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .bw-root ::selection{background:var(--cyan-soft);}
+  .mono{font-family:'Space Grotesk',sans-serif;}
+  .topbar{
+    display:flex;justify-content:space-between;align-items:baseline;
+    flex-wrap:wrap;gap:8px;
+    padding:22px 28px 16px;
+    border-bottom:1px solid var(--rule);
+    position:sticky;top:0;z-index:50;
+    background:var(--paper);
+  }
+  @media (max-width:600px){
+    .topbar{padding:16px 16px 12px;}
+    .brand-mark{font-size:16px;}
+    .brand-tag{display:none;}
+    .job-info{font-size:10.5px;}
+  }
+  @media (max-width:420px){
+    .topbar{flex-direction:column;align-items:flex-start;gap:4px;}
+  }
+  .brand-mark{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;
+    letter-spacing:-0.01em;display:inline-flex;align-items:center;gap:10px;
+  }
+  .brand-mark::before{
+    content:'';width:14px;height:14px;background:var(--cyan);border-radius:3px;
+    transform:rotate(8deg);flex-shrink:0;display:inline-block;
+  }
+  .brand-tag{
+    font-family:'Space Grotesk';font-size:11px;color:var(--ink-soft);
+    margin-left:10px;letter-spacing:0.02em;
+  }
+  .job-info{font-family:'Space Grotesk';font-size:11.5px;color:var(--ink-soft);}
+  .job-info b{color:var(--ink);font-weight:500;}
+
+  .layout{
+    display:grid;grid-template-columns:360px 1fr;gap:0;
+    align-items:stretch;
+  }
+  @media (max-width:860px){.layout{grid-template-columns:1fr;}}
+
+  .panel{padding:24px 26px;}
+  @media (max-width:600px){.panel{padding:18px 16px;}}
+  .settings{border-right:1px solid var(--rule);background:var(--panel-2);}
+  @media (max-width:860px){.settings{border-right:none;border-bottom:1px solid var(--rule);}}
+
+  .step{margin-bottom:26px;}
+  .step-head{
+    display:flex;align-items:baseline;gap:8px;margin-bottom:12px;
+  }
+  .step-num{
+    font-family:'Space Grotesk';font-size:11px;color:var(--cyan);
+    border:1px solid var(--cyan);border-radius:3px;
+    width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+    flex:none;
+  }
+  .step-title{
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;
+  }
+  .field{margin-bottom:10px;}
+  .field label{
+    display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:4px;
+  }
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;min-width:0;}
+  @media (max-width:380px){.field-row{flex-wrap:wrap;}.field-row .field{flex:1 1 100%;}}
+  input[type=text],input[type=number],select{
+    width:100%;padding:9px 10px;border:1px solid var(--rule);border-radius:3px;
+    background:var(--paper-soft);color:var(--ink);font-family:'Space Grotesk';font-size:13px;
+  }
+  select{font-family:'Space Grotesk';}
+  input::placeholder{color:var(--ink-faint);opacity:1;font-style:italic;}
+  input:focus,select:focus{outline:2px solid var(--cyan);outline-offset:1px;}
+  .helper{font-size:11px;color:var(--ink-soft);margin-top:3px;}
+  .check{display:flex;align-items:flex-start;gap:10px;margin-bottom:13px;cursor:pointer;padding:2px 0;}
+  .check input{accent-color:var(--cyan);width:17px;height:17px;margin-top:2px;flex:none;cursor:pointer;}
+  .check .label{font-size:13px;}
+  .check .sub{display:block;font-size:11px;color:var(--ink-soft);margin-top:1px;}
+  .check.disabled{opacity:0.45;pointer-events:none;}
+
+  .info-icon{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:15px;height:15px;border-radius:50%;border:1px solid var(--ink-soft);
+    color:var(--ink-soft);font-size:10px;font-family:'Space Grotesk';font-style:italic;
+    margin-left:6px;cursor:pointer;background:none;padding:0;line-height:1;
+    vertical-align:middle;flex:none;
+  }
+  .info-icon:hover{border-color:var(--cyan);color:var(--cyan);}
+  .info-popover{
+    margin:-4px 0 13px 27px;padding:11px 30px 11px 12px;border:1px solid var(--rule);
+    border-radius:5px;background:var(--paper-soft);font-size:11.5px;color:var(--ink-soft);
+    line-height:1.5;position:relative;
+  }
+  .info-popover p{margin:0 0 8px;}
+  .info-popover p:last-child{margin-bottom:0;}
+  .info-popover b{color:var(--ink);}
+  .info-popover-close{
+    position:absolute;top:6px;right:8px;background:none;border:none;
+    color:var(--ink-soft);font-size:16px;cursor:pointer;line-height:1;padding:2px;
+  }
+  .info-popover-close:hover{color:var(--ink);}
+
+  .dropzone{
+    border:1.5px dashed var(--ink-soft);border-radius:6px;
+    padding:26px 14px;text-align:center;cursor:pointer;
+    background:var(--paper-soft);transition:border-color .15s,background .15s,transform .1s;
+  }
+  .dropzone:hover{border-color:var(--cyan);}
+  .dropzone:active{transform:scale(0.99);}
+  .dropzone.drag{border-color:var(--cyan);background:var(--cyan-soft);}
+  .dropzone .dz-main{font-size:13.5px;}
+  .dropzone .dz-sub{font-size:11px;color:var(--ink-soft);margin-top:4px;}
+  .file-row{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 12px;border:1px solid var(--rule);border-radius:4px;background:var(--paper-soft);
+  }
+  .file-row .name{font-size:12.5px;font-family:'Space Grotesk';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .file-row button{background:none;border:none;color:var(--trim);font-size:12px;cursor:pointer;font-family:'Space Grotesk';}
+  .error-msg{color:var(--trim);font-size:12px;margin-top:8px;}
+  .bleed-warning{color:var(--trim);}
+
+  .tip{font-size:11.5px;color:var(--ink-soft);margin-top:18px;border-top:1px solid var(--rule);padding-top:12px;}
+
+  .export-step{margin-top:22px;border-top:1px solid var(--rule);padding-top:18px;}
+  .export-btn{
+    width:100%;padding:12px 14px;border:none;border-radius:5px;
+    background:var(--cyan);color:#15211b;font-family:'Space Grotesk';font-weight:600;
+    font-size:14px;cursor:pointer;letter-spacing:0.01em;
+  }
+  .export-btn:hover{filter:brightness(1.08);}
+  .export-btn:disabled{opacity:0.45;cursor:not-allowed;filter:none;}
+  .export-helper{font-size:11px;color:var(--ink-soft);margin-top:7px;}
+  .export-status{font-size:12px;color:var(--ink-soft);margin-top:9px;min-height:14px;}
+  .export-status.is-error{color:var(--trim);}
+  .export-status.is-done{color:var(--ink);}
+
+  .plan h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;margin:0 0 4px;}
+  .stats-row{
+    font-family:'Space Grotesk';font-size:12px;color:var(--ink-soft);
+    margin-bottom:18px;display:flex;gap:18px;flex-wrap:wrap;
+  }
+  .stats-row span b{color:var(--ink);font-weight:500;}
+  .sig-block{margin-bottom:22px;}
+  .sig-title{font-family:'Space Grotesk';font-size:12px;color:var(--ink-soft);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.04em;}
+  .sheets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:14px;}
+  .sheet-card{width:auto;}
+  .sheet-label{font-family:'Space Grotesk';font-size:10.5px;color:var(--ink-soft);margin-bottom:5px;text-align:center;}
+  .face{
+    display:flex;border:1.5px solid var(--rule);border-radius:2px;
+    height:42px;position:relative;margin-bottom:4px;background:var(--paper-soft);
+  }
+  .face.front{border-color:var(--cyan);}
+  .face.back{border-color:var(--magenta);}
+  .face .cell{
+    flex:1;display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk';font-size:12px;position:relative;
+  }
+  .face .cell.blank{color:var(--ink-soft);font-style:italic;font-size:10.5px;}
+  .face .fold{width:0;border-left:1px dashed var(--ink-soft);}
+  .face-tag{
+    position:absolute;top:-7px;left:6px;font-family:'Space Grotesk';font-size:8.5px;
+    background:var(--paper-soft);padding:0 3px;letter-spacing:0.04em;
+  }
+  .face.front .face-tag{color:var(--cyan);}
+  .face.back .face-tag{color:var(--magenta);}
+  .preview-face{height:60px;}
+  .thumb-cell{
+    position:relative;overflow:hidden;background:var(--paper);
+  }
+  .thumb-pagenum{
+    position:absolute;bottom:3px;right:3px;font-family:'Space Grotesk';font-size:11px;
+    font-weight:700;color:#15211b;background:var(--ink);padding:1px 5px;border-radius:3px;
+    line-height:1.4;pointer-events:none;z-index:1;box-shadow:0 1px 3px rgba(0,0,0,0.35);
+  }
+  .thumb-img{
+    position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;
+  }
+  .cover-card{width:160px;max-width:42vw;margin-bottom:22px;}
+  @media (max-width:480px){.cover-card{width:140px;max-width:55vw;}}
+  .empty-plan{color:var(--ink-soft);font-size:13px;}
+
+  .suggest-banner{
+    display:flex;align-items:flex-start;gap:12px;
+    background:var(--magenta-soft);border:1px solid var(--magenta);border-radius:5px;
+    padding:13px 14px;margin-bottom:20px;
+  }
+  .suggest-icon{
+    flex:none;width:20px;height:20px;border-radius:50%;background:var(--magenta);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';
+    font-size:12px;font-weight:600;
+  }
+  .suggest-body{flex:1;min-width:0;}
+  .suggest-title{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;}
+  .suggest-text{font-size:12.5px;color:var(--ink-soft);}
+  .suggest-text b{color:var(--ink);font-weight:600;}
+  .suggest-other{
+    margin-top:9px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+    font-family:'Space Grotesk';font-size:10.5px;color:var(--ink-soft);
+  }
+  .suggest-pill{
+    font-family:'Space Grotesk';font-size:10.5px;background:var(--paper-soft);
+    border:1px solid var(--rule);border-radius:10px;padding:3px 9px;cursor:pointer;color:var(--ink);
+  }
+  .suggest-pill:hover{border-color:var(--magenta);color:var(--magenta);}
+  .suggest-apply{
+    flex:none;align-self:center;background:var(--magenta);color:#fff;border:none;
+    border-radius:4px;padding:8px 14px;font-family:'Space Grotesk';font-size:12px;
+    cursor:pointer;white-space:nowrap;
+  }
+  .suggest-apply:hover{background:var(--ink);}
+  @media (max-width:480px){
+    .suggest-banner{flex-wrap:wrap;}
+    .suggest-apply{width:100%;margin-top:8px;padding:10px 14px;}
+  }
+
+  .real-preview-grid{
+    display:flex;flex-direction:column;gap:20px;
+  }
+  .real-sheet-card{
+    width:100%;
+  }
+  .real-sheet-label{
+    font-family:'Space Grotesk';font-size:10.5px;color:var(--ink-soft);
+    margin-bottom:6px;text-align:center;letter-spacing:0.02em;
+  }
+  .real-canvas-wrap{
+    border:1px solid var(--rule);background:#fff;box-shadow:0 1px 3px rgba(33,29,25,0.12);
+    cursor:zoom-in;line-height:0;
+  }
+  .real-canvas-wrap canvas{display:block;max-width:100%;height:auto;}
+  .real-canvas-wrap:hover{border-color:var(--cyan);}
+  .real-preview-status{
+    font-family:'Space Grotesk';font-size:11px;color:var(--ink-soft);margin-top:14px;
+  }
+
+  /* ---- real preview: slide-out tab + drawer ---- */
+  .rp-tab{
+    position:fixed;top:50%;right:0;transform:translateY(-50%);
+    background:var(--ink);color:var(--paper-soft);border:none;
+    border-radius:6px 0 0 6px;padding:18px 9px;cursor:pointer;
+    box-shadow:-2px 0 8px rgba(33,29,25,0.18);z-index:910;
+    writing-mode:vertical-rl;text-orientation:mixed;
+    transition:right .25s ease, background .15s;
+  }
+  .rp-tab:hover{background:var(--cyan);}
+  .rp-tab.is-open{right:420px;}
+  .rp-tab-text{
+    font-family:'Space Grotesk';font-size:11px;letter-spacing:0.08em;
+  }
+  @media (max-width:600px){
+    .rp-tab{padding:14px 7px;}
+    .rp-tab-text{font-size:10px;}
+  }
+
+  .rp-drawer{
+    position:fixed;top:0;right:0;height:100vh;width:420px;max-width:92vw;
+    background:var(--paper-soft);border-left:1px solid var(--rule);
+    box-shadow:-6px 0 24px rgba(33,29,25,0.22);
+    transform:translateX(100%);transition:transform .28s ease;
+    z-index:900;display:flex;flex-direction:column;
+  }
+  .rp-drawer.is-open{transform:translateX(0);}
+  .rp-drawer-head{
+    padding:20px 22px 14px;border-bottom:1px solid var(--rule);position:relative;flex:none;
+  }
+  .rp-drawer-title{
+    display:block;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;
+  }
+  .rp-drawer-sub{
+    display:block;font-family:'Space Grotesk';font-size:11px;color:var(--ink-soft);margin-top:4px;
+  }
+  .rp-drawer-close{
+    position:absolute;top:10px;right:10px;background:none;border:none;
+    font-size:26px;line-height:1;color:var(--ink-soft);cursor:pointer;
+    width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  }
+  .rp-drawer-close:hover{color:var(--trim);}
+  .rp-drawer-body{
+    padding:20px 22px;overflow-y:auto;flex:1;
+  }
+  @media (max-width:480px){
+    .rp-drawer-head{padding:16px 18px 12px;}
+    .rp-drawer-body{padding:16px 14px;}
+  }
+  @media (max-width:860px){
+    .rp-tab.is-open{display:none;}
+  }
+
+  .rp-lightbox{
+    display:none;position:fixed;inset:0;background:rgba(33,29,25,0.82);
+    z-index:1000;align-items:center;justify-content:center;
+  }
+  .rp-lightbox-inner{
+    position:relative;display:flex;flex-direction:column;align-items:center;
+    max-width:92vw;max-height:92vh;
+  }
+  .rp-lb-canvas-wrap{
+    background:#fff;box-shadow:0 4px 24px rgba(0,0,0,0.4);line-height:0;
+    max-width:88vw;max-height:80vh;overflow:auto;
+  }
+  .rp-lb-canvas-wrap canvas{display:block;}
+  .rp-lb-label{
+    font-family:'Space Grotesk';font-size:12px;color:var(--paper-soft);margin-top:12px;
+  }
+  .rp-lb-close{
+    position:absolute;top:-38px;right:-6px;background:none;border:none;
+    color:var(--paper-soft);font-size:30px;line-height:1;cursor:pointer;
+  }
+  .rp-lb-nav{
+    position:fixed;top:50%;transform:translateY(-50%);background:rgba(245,242,234,0.12);
+    border:1px solid rgba(245,242,234,0.4);color:var(--paper-soft);
+    width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer;
+  }
+  .rp-lb-nav:hover{background:rgba(245,242,234,0.25);}
+  .rp-lb-prev{left:18px;}
+  .rp-lb-next{right:18px;}
+  @media (max-width:600px){
+    .rp-lb-nav{width:36px;height:36px;font-size:18px;}
+    .rp-lb-prev{left:6px;}
+    .rp-lb-next{right:6px;}
+    .rp-lb-close{top:-34px;right:0;font-size:26px;}
+  }
+
+  .export-modal{
+    display:none;position:fixed;inset:0;background:rgba(21,33,27,0.78);
+    z-index:1100;align-items:center;justify-content:center;padding:24px;
+  }
+  .export-modal.is-open{display:flex;}
+  .export-modal-card{
+    background:var(--paper-soft);border:1px solid var(--rule);border-radius:8px;
+    width:480px;max-width:100%;max-height:86vh;display:flex;flex-direction:column;
+    box-shadow:0 10px 36px rgba(0,0,0,0.4);
+  }
+  .export-modal-head{
+    padding:18px 22px 14px;border-bottom:1px solid var(--rule);position:relative;flex:none;
+  }
+  .export-modal-title{
+    display:block;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;
+  }
+  .export-modal-sub{
+    display:block;font-family:'Space Grotesk';font-size:11.5px;color:var(--ink-soft);margin-top:4px;
+  }
+  .export-modal-close{
+    position:absolute;top:8px;right:8px;background:none;border:none;
+    font-size:24px;line-height:1;color:var(--ink-soft);cursor:pointer;
+    width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  }
+  .export-modal-close:hover{color:var(--trim);}
+  .export-modal-body{
+    padding:18px 22px;overflow-y:auto;flex:1;
+  }
+  .export-file-row{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:13px 14px;border:1px solid var(--rule);border-radius:5px;background:var(--paper);
+  }
+  .export-file-row + .export-file-row{margin-top:10px;}
+  .export-file-info{min-width:0;}
+  .export-file-name{
+    font-family:'Space Grotesk';font-size:13px;font-weight:500;color:var(--ink);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .export-file-meta{
+    font-family:'Space Grotesk';font-size:11px;color:var(--ink-soft);margin-top:2px;
+  }
+  .export-file-dl{
+    flex:none;padding:8px 14px;border:none;border-radius:4px;
+    background:var(--cyan);color:#15211b;font-family:'Space Grotesk';font-weight:600;
+    font-size:12.5px;cursor:pointer;letter-spacing:0.01em;text-decoration:none;
+    display:inline-flex;align-items:center;
+  }
+  .export-file-dl:hover{filter:brightness(1.08);}
+  .export-file-dl.is-done{background:var(--rule);color:var(--ink-soft);}
+  .export-modal-foot{
+    padding:14px 22px 18px;border-top:1px solid var(--rule);flex:none;
+  }
+  .export-all-btn{
+    width:100%;padding:11px 14px;border:1px solid var(--cyan);border-radius:5px;
+    background:transparent;color:var(--cyan);font-family:'Space Grotesk';font-weight:600;
+    font-size:13px;cursor:pointer;letter-spacing:0.01em;
+  }
+  .export-all-btn:hover{background:var(--cyan-soft);}
+  @media (max-width:480px){
+    .export-modal-head{padding:14px 16px 12px;}
+    .export-modal-body{padding:14px 16px;}
+    .export-modal-foot{padding:12px 16px 16px;}
+  }
+</style>
+
+<div class="bw-root">
+  <div class="topbar">
+    <div>
+      <span class="brand-mark">Booklet Generator</span>
+      <span class="brand-tag">fold-ready PDF imposition</span>
+    </div>
+    <div class="job-info mono" id="jobInfo">no file loaded</div>
+  </div>
+
+  <div class="layout">
+    <div class="panel settings">
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">1</span><span class="step-title">Source</span></div>
+        <div id="dropzone" class="dropzone">
+          <div class="dz-main">Drop a PDF here, or click to choose</div>
+          <div class="dz-sub">One PDF · any page size</div>
+        </div>
+        <div id="fileRow" class="file-row" style="display:none;margin-top:8px;">
+          <span class="name" id="fileName"></span>
+          <button id="removeFile">remove</button>
+        </div>
+        <input type="file" id="fileInput" accept="application/pdf" style="display:none;">
+        <div class="error-msg" id="fileError" style="display:none;"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">2</span><span class="step-title">Sheet</span></div>
+        <div class="field">
+          <label>File size to print</label>
+          <select id="sheetSize">
+            <optgroup label="ISO A series">
+              <option value="A3">A3 (297 × 420 mm)</option>
+              <option value="A4" selected>A4 (210 × 297 mm)</option>
+              <option value="A5">A5 (148 × 210 mm)</option>
+              <option value="A6">A6 (105 × 148 mm)</option>
+            </optgroup>
+            <optgroup label="ISO B series">
+              <option value="B4">B4 (250 × 353 mm)</option>
+              <option value="B5">B5 (176 × 250 mm)</option>
+            </optgroup>
+            <optgroup label="US / North America">
+              <option value="LETTER">Letter (215.9 × 279.4 mm)</option>
+              <option value="LEGAL">Legal (215.9 × 355.6 mm)</option>
+              <option value="TABLOID">Tabloid (279.4 × 431.8 mm)</option>
+              <option value="LEDGER_EXTRA">Ledger Extra (304.8 × 457.2 mm)</option>
+              <option value="EXECUTIVE">Executive (184.15 × 266.7 mm)</option>
+              <option value="HALF_LETTER">Half Letter (139.7 × 215.9 mm)</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="FOLIO">Folio (210 × 330 mm)</option>
+              <option value="CUSTOM">Custom…</option>
+            </optgroup>
+          </select>
+          <div class="helper">The page size of the PDF file you'll generate — used flat in landscape, split in half down the fold.</div>
+        </div>
+        <div class="field-row" id="customSizeRow" style="display:none;">
+          <div class="field"><label>Width (mm)</label><input type="number" id="customW" value="210" min="50"></div>
+          <div class="field"><label>Height (mm)</label><input type="number" id="customH" value="297" min="50"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Margin (mm)</label><input type="number" id="marginMm" value="0" min="0" step="0.5"></div>
+          <div class="field"><label>Gutter / spine (mm)</label><input type="number" id="gutterMm" value="0" min="0" step="0.5"></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">3</span><span class="step-title">Signature</span></div>
+        <div class="field">
+          <label>Pages per signature</label>
+          <input type="number" id="sigSize" placeholder="auto (one signature)" min="4" step="4">
+          <div class="helper">Leave blank for a single signature. Rounded up to a multiple of 4 — smaller values fold easier on thick documents.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">4</span><span class="step-title">Binding</span></div>
+        <label class="check">
+          <input type="checkbox" id="coverSeparate">
+          <span><span class="label">Separate cover</span><span class="sub">First &amp; last page print on their own sheet, apart from the body</span></span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="rtl">
+          <span><span class="label">Right-to-left reading order</span><span class="sub">Binds on the right edge instead of the left</span></span>
+        </label>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-num">5</span><span class="step-title">Finishing</span></div>
+        <label class="check">
+          <input type="checkbox" id="pageNumbers" checked>
+          <span><span class="label">Page numbers</span><span class="sub">Stamped using the source document's own page order</span></span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="foldMarks" checked>
+          <span><span class="label">Fold marks</span><span class="sub">Dashed centre crease line</span></span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="cutMarks">
+          <span><span class="label">Cutting marks<button type="button" class="info-icon" id="cutMarksInfoBtn" aria-label="About cutting marks">i</button></span><span class="sub">Corner trim marks near each edge of the sheet</span></span>
+        </label>
+        <div class="info-popover" id="cutMarksInfo" style="display:none;">
+          <button type="button" class="info-popover-close" id="cutMarksInfoClose" aria-label="Close">&times;</button>
+          <p>Only turn cutting marks on if you're printing onto paper <b>larger</b> than the file's page size — the marks show where to trim it down to size.</p>
+          <p>In your printer's settings, set <b>Scale</b> to <b>100% / Actual size</b> so it prints true to size. Don't use "Fit to page", "Scale to fit", "Shrink to fit", or any stretch/fill option — those will throw the marks off.</p>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="autoRotate" checked>
+          <span><span class="label">Auto-rotate landscape pages</span><span class="sub">Best-effort — check the first export</span></span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="creep">
+          <span><span class="label">Creep compensation</span><span class="sub">Nudges inner sheets toward the spine</span></span>
+        </label>
+        <div class="field" id="creepRow" style="display:none;margin-left:23px;width:calc(100% - 23px);">
+          <label>Max creep shift (mm)</label>
+          <input type="number" id="creepMax" value="2" min="0" step="0.5">
+        </div>
+        <label class="check">
+          <input type="checkbox" id="manualDuplex">
+          <span><span class="label">Manual duplex</span><span class="sub">Two files — no automatic double-sided printer needed</span></span>
+        </label>
+      </div>
+
+      <div class="step export-step">
+        <div class="step-head"><span class="step-num">6</span><span class="step-title">Export</span></div>
+        <button id="exportBtn" class="export-btn" disabled>Export PDF</button>
+        <div class="export-helper">Builds one print-ready file with every signature combined. Manual duplex splits it into a fronts file and a backs file. A separate cover exports as its own file too — up to 3 files total (cover + fronts + backs).</div>
+        <div class="export-status" id="exportStatus"></div>
+      </div>
+
+      <p class="tip">Tip: if your printer does have a duplex mode, set it to flip on the <b>short edge</b> for booklet jobs — most "flip on long edge" defaults will print the backs upside down.</p>
+    </div>
+
+    <div class="panel plan">
+      <h2>Imposition plan</h2>
+      <div class="stats-row" id="statsRow"><span>Upload a PDF to see the layout.</span></div>
+      <div id="planBody"></div>
+    </div>
+  </div>
+</div>
+
+<button id="realPreviewTab" class="rp-tab" style="display:none;" aria-label="Open real preview">
+  <span class="rp-tab-text">REAL PREVIEW</span>
+</button>
+<div id="realPreviewDrawer" class="rp-drawer">
+  <div class="rp-drawer-head">
+    <span class="rp-drawer-title">Real preview</span>
+    <span class="rp-drawer-sub">Rendered exactly as it will print — first signature</span>
+    <button id="realPreviewDrawerClose" class="rp-drawer-close" aria-label="Close">&times;</button>
+  </div>
+  <div class="rp-drawer-body">
+    <div class="real-preview-grid" id="realPreviewGrid"><div class="empty-plan">Rendering…</div></div>
+    <div class="real-preview-status" id="realPreviewStatus"></div>
+  </div>
+</div>
+
+<div id="exportModal" class="export-modal" aria-hidden="true">
+  <div class="export-modal-card" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+    <div class="export-modal-head">
+      <span class="export-modal-title" id="exportModalTitle">Export ready</span>
+      <span class="export-modal-sub" id="exportModalSub">Download each file below.</span>
+      <button id="exportModalClose" class="export-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="export-modal-body" id="exportModalBody"></div>
+    <div class="export-modal-foot">
+      <button id="exportAllBtn" class="export-all-btn">Download all</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  if(typeof PDFLib === 'undefined'){
+    // pdf-lib failed to load from the CDN (offline, ad-blocker, firewall,
+    // content blocker). Without this guard the destructure below throws and
+    // the WHOLE script dies before a single event listener gets attached —
+    // every button on the page, including "Export PDF", silently does
+    // nothing, with no visible error anywhere.
+    document.addEventListener('DOMContentLoaded', showLoadFailure);
+    if(document.readyState !== 'loading') showLoadFailure();
+    function showLoadFailure(){
+      const banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#e85c4a;color:#fff;'+
+        'font-family:sans-serif;padding:14px 18px;z-index:9999;text-align:center;font-size:14px;';
+      banner.textContent = "Couldn't load a required library (pdf-lib) from cdnjs.cloudflare.com — "+
+        "check your internet connection or whether something (ad-blocker, firewall, browser extension) "+
+        "is blocking that domain, then reload this page.";
+      document.body.prepend(banner);
+    }
+    return;
+  }
+  const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
+  const MM = 72/25.4;
+
+  if (window.pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.6.347/pdf.worker.min.js';
+  }
+  let pdfjsDoc = null;             // pdf.js copy of the source, for rendering thumbnails
+  const pageImgCache = new Map();  // pageNum -> dataURL
+  let previewToken = 0;            // bumped on every recompute to cancel stale async renders
+
+  const SIZES = {
+    A3:[297,420], A4:[210,297], A5:[148,210], A6:[105,148],
+    B4:[250,353], B5:[176,250],
+    LETTER:[215.9,279.4], LEGAL:[215.9,355.6], TABLOID:[279.4,431.8],
+    EXECUTIVE:[184.15,266.7], HALF_LETTER:[139.7,215.9],
+    LEDGER_EXTRA:[304.8,457.2], FOLIO:[210,330]
+  };
+
+  let srcBytes = null, srcDoc = null, srcFile = null, srcPageCount = 0;
+
+  const $ = id => document.getElementById(id);
+  const dropzone=$('dropzone'), fileInput=$('fileInput'), fileRow=$('fileRow'),
+        fileName=$('fileName'), fileError=$('fileError'), jobInfo=$('jobInfo'),
+        statsRow=$('statsRow'), planBody=$('planBody');
+
+  // ---------- file handling ----------
+  dropzone.addEventListener('click', ()=>fileInput.click());
+  dropzone.addEventListener('dragover', e=>{e.preventDefault();dropzone.classList.add('drag');});
+  dropzone.addEventListener('dragleave', ()=>dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', e=>{
+    e.preventDefault();dropzone.classList.remove('drag');
+    if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); });
+  $('removeFile').addEventListener('click', ()=>{
+    srcBytes=null;srcDoc=null;srcFile=null;srcPageCount=0;
+    pdfjsDoc=null; pageImgCache.clear(); previewToken++;
+    realPreviewDoc=null; realPreviewToken++; realPreviewPending=false;
+    realPreviewEverShown=false; rpDrawerManuallyClosed=false;
+    hideRealPreviewTab();
+    closeLightbox();
+    closeExportModal();
+    fileRow.style.display='none';dropzone.style.display='block';
+    jobInfo.textContent='no file loaded';
+    statsRow.innerHTML='<span>Upload a PDF to see the layout.</span>'; planBody.innerHTML='';
+    fileInput.value='';
+    $('exportBtn').disabled = true;
+    setExportStatus('', false);
+  });
+
+  async function loadFile(file){
+    fileError.style.display='none';
+    if(file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')){
+      showError('That file does not look like a PDF.'); return;
+    }
+    try{
+      const buf = await file.arrayBuffer();
+      const doc = await PDFDocument.load(buf, {ignoreEncryption:true});
+      srcBytes = buf; srcDoc = doc; srcFile = file; srcPageCount = doc.getPageCount();
+      fileName.textContent = file.name;
+      fileRow.style.display='flex'; dropzone.style.display='none';
+      jobInfo.innerHTML = '<b>'+escapeHtml(file.name)+'</b> · '+srcPageCount+' pages';
+
+      pageImgCache.clear();
+      pdfjsDoc = null;
+      closeExportModal(); // a new file invalidates any export modal still
+                           // showing download buttons for the previous PDF
+      if(window.pdfjsLib){
+        try{
+          pdfjsDoc = await pdfjsLib.getDocument({data: buf.slice(0)}).promise;
+        }catch(e){
+          console.warn('Preview rendering unavailable:', e);
+        }
+      }
+
+      recomputePlan();
+      $('exportBtn').disabled = false;
+      setExportStatus('', false);
+    }catch(err){
+      showError('Could not read that PDF — it may be encrypted or corrupted.');
+    }
+  }
+  function showError(msg){ fileError.textContent=msg; fileError.style.display='block'; }
+  function escapeHtml(s){ return s.replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+  // ---------- settings persistence (remembers last-used settings) ----------
+  const SETTINGS_FIELDS = ['sheetSize','customW','customH','marginMm','gutterMm','sigSize',
+    'coverSeparate','rtl','pageNumbers','foldMarks','cutMarks','autoRotate','creep','creepMax','manualDuplex'];
+  const SETTINGS_KEY = 'last-settings';
+
+  function readCurrentSettingsForSave(){
+    const out = {};
+    SETTINGS_FIELDS.forEach(id=>{
+      const el = $(id);
+      if(!el) return;
+      out[id] = (el.type==='checkbox') ? el.checked : el.value;
+    });
+    return out;
+  }
+
+  function applySettingsToFields(saved){
+    if(!saved) return;
+    SETTINGS_FIELDS.forEach(id=>{
+      const el = $(id);
+      if(!el || !(id in saved)) return;
+      if(el.type==='checkbox') el.checked = !!saved[id];
+      else el.value = saved[id];
+    });
+    // sync UI bits that depend on field state
+    $('customSizeRow').style.display = $('sheetSize').value==='CUSTOM' ? 'flex':'none';
+    $('creepRow').style.display = $('creep').checked ? 'block':'none';
+  }
+
+  let saveSettingsTimer = null;
+  function saveSettingsDebounced(){
+    clearTimeout(saveSettingsTimer);
+    saveSettingsTimer = setTimeout(()=>{
+      try{
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(readCurrentSettingsForSave()));
+      }catch(e){
+        console.warn('Could not save settings:', e);
+      }
+    }, 300);
+  }
+
+  function loadSavedSettings(){
+    try{
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if(raw) applySettingsToFields(JSON.parse(raw));
+    }catch(e){
+      // no saved settings yet, or storage unavailable — defaults stay as-is
+    }
+  }
+
+  // ---------- settings ----------
+  $('sheetSize').addEventListener('change', ()=>{
+    $('customSizeRow').style.display = $('sheetSize').value==='CUSTOM' ? 'flex':'none';
+    recomputePlan();
+  });
+  $('creep').addEventListener('change', ()=>{
+    $('creepRow').style.display = $('creep').checked ? 'block':'none';
+  });
+  $('autoRotate').addEventListener('change', ()=>{
+    // Thumbnail renders are keyed only by page number, but now bake in
+    // whether that page gets rotated — stale cached images would otherwise
+    // keep showing the old orientation after this toggles.
+    pageImgCache.clear();
+  });
+  // Info popover for cutting marks — both the icon and the label it sits
+  // inside are nested in the <label class="check">, so a plain click would
+  // also toggle the checkbox via the label's default behavior; preventDefault
+  // + stopPropagation keeps "learn more" from accidentally flipping the
+  // setting.
+  $('cutMarksInfoBtn').addEventListener('click', e=>{
+    e.preventDefault(); e.stopPropagation();
+    const el = $('cutMarksInfo');
+    el.style.display = (el.style.display==='none') ? 'block' : 'none';
+  });
+  $('cutMarksInfoClose').addEventListener('click', e=>{
+    e.preventDefault(); e.stopPropagation();
+    $('cutMarksInfo').style.display = 'none';
+  });
+  SETTINGS_FIELDS.forEach(id=>{
+    const el = $(id);
+    // Checkboxes only ever fire 'change' (no 'input' needed); text/number/range
+    // fields fire 'input' as the user types and 'change' on blur — using both
+    // on a checkbox double-fires the same click, double-rendering the preview.
+    const evt = el.type==='checkbox' ? 'change' : 'input';
+    el.addEventListener(evt, recomputePlan);
+    el.addEventListener(evt, saveSettingsDebounced);
+  });
+
+  loadSavedSettings();
+  recomputePlan();
+
+  function roundUp(n,k){ return Math.ceil(n/k)*k; }
+
+  // ---------- planning (pure numbers, no pdf-lib needed) ----------
+  function buildPlan(){
+    if(!srcPageCount) return null;
+    const coverSeparate = $('coverSeparate').checked;
+    const rtl = $('rtl').checked;
+
+    let body = [];
+    let coverFront=null, coverBack=null;
+    if(coverSeparate && srcPageCount>=2){
+      coverFront = 1; coverBack = srcPageCount;
+      for(let p=2;p<=srcPageCount-1;p++) body.push(p);
+    } else {
+      for(let p=1;p<=srcPageCount;p++) body.push(p);
+    }
+    if(rtl) body = body.slice().reverse();
+
+    const nb = body.length;
+    let sigSetting = parseInt($('sigSize').value,10);
+    let sigSize = (sigSetting && sigSetting>0) ? roundUp(sigSetting,4) : (nb>0?roundUp(nb,4):0);
+    let signatures = [];
+    let blankPad = 0;
+    if(sigSize>0){
+      const total = roundUp(nb, sigSize);
+      blankPad = total-nb;
+      const padded = body.concat(Array(blankPad).fill(null));
+      for(let i=0;i<padded.length;i+=sigSize){
+        signatures.push(imposeSignature(padded.slice(i,i+sigSize)));
+      }
+    }
+    return {coverFront,coverBack,signatures,sourcePages:srcPageCount,bodyPages:nb,sigSize,blankPad};
+  }
+
+  function imposeSignature(pages){
+    const m = pages.length, sheets=[];
+    for(let i=0;i<m/4;i++){
+      sheets.push({
+        front:{left:pages[m-1-i*2], right:pages[i*2]},
+        back:{left:pages[i*2+1], right:pages[m-2-i*2]}
+      });
+    }
+    return sheets;
+  }
+
+  // Looks for "pages per signature" values (multiples of 4) that produce
+  // zero — or fewer — blank padding pages for a body of `nb` pages.
+  // Always includes the "single signature" (blank field) option as a candidate.
+  // Returns an array of {sigSize, blanks, signatures} sorted best-first,
+  // where sigSize===null means "leave the field blank / auto".
+  function findBestSignatureOptions(nb){
+    if(nb<=0) return [];
+    const maxCandidate = Math.max(4, Math.min(64, roundUp(nb,4)));
+    const candidates = [];
+
+    // the "auto / single signature" option
+    const autoSize = roundUp(nb,4);
+    candidates.push({sigSize:null, effectiveSize:autoSize, blanks:autoSize-nb, signatures:autoSize/4});
+
+    for(let s=4; s<=maxCandidate; s+=4){
+      const total = roundUp(nb,s);
+      candidates.push({sigSize:s, effectiveSize:s, blanks:total-nb, signatures:total/s});
+    }
+
+    // de-dupe by effectiveSize+signatures (auto and an explicit value can coincide)
+    const seen = new Set();
+    const deduped = candidates.filter(c=>{
+      const key = c.effectiveSize+':'+c.signatures;
+      if(seen.has(key)) return false;
+      seen.add(key); return true;
+    });
+
+    // Sort: fewest blanks first; tie-break by preferring signature sizes in a
+    // comfortable hand-foldable range (16–32), then by fewer total signatures.
+    deduped.sort((a,b)=>{
+      if(a.blanks !== b.blanks) return a.blanks - b.blanks;
+      const comfy = v => (v>=16 && v<=32) ? 0 : 1;
+      const ca = comfy(a.effectiveSize), cb = comfy(b.effectiveSize);
+      if(ca !== cb) return ca - cb;
+      return a.signatures - b.signatures;
+    });
+
+    return deduped;
+  }
+
+  function renderOtherOptions(opts){
+    const pills = opts.map(o=>{
+      const label = o.sigSize===null ? 'single signature' : o.sigSize+'/sig';
+      const blanks = o.blanks===0 ? 'no blanks' : o.blanks+' blank'+(o.blanks===1?'':'s');
+      return '<button class="suggest-pill" data-apply-sig="'+(o.sigSize===null?'':o.sigSize)+'">'+label+' · '+blanks+'</button>';
+    }).join('');
+    return '<div class="suggest-other"><span>also fine:</span>'+pills+'</div>';
+  }
+
+  // Event delegation: the suggestion banner is re-rendered on every
+  // recomputePlan() call, so we bind once on the stable parent container.
+  planBody.addEventListener('click', e=>{
+    const btn = e.target.closest('[data-apply-sig]');
+    if(!btn) return;
+    const val = btn.getAttribute('data-apply-sig');
+    $('sigSize').value = val;
+    recomputePlan();
+    saveSettingsDebounced();
+  });
+
+  function recomputePlan(){
+    const plan = buildPlan();
+    previewToken++;
+    const myToken = previewToken;
+    if(!plan){ statsRow.innerHTML='<span>Upload a PDF to see the layout.</span>'; planBody.innerHTML=''; return; }
+    const totalSheets = plan.signatures.reduce((a,s)=>a+s.length,0);
+    statsRow.innerHTML =
+      '<span><b>'+plan.sourcePages+'</b> source pages</span>'+
+      (plan.coverFront ? '<span><b>2</b> cover pages (separate)</span>' : '') +
+      '<span><b>'+plan.bodyPages+'</b> body pages</span>'+
+      '<span><b>'+totalSheets+'</b> printed sheets</span>'+
+      '<span><b>'+plan.signatures.length+'</b> signature'+(plan.signatures.length===1?'':'s')+'</span>';
+
+    let html='';
+    if(plan.blankPad>0){
+      const options = findBestSignatureOptions(plan.bodyPages);
+      const better = options.filter(o=>o.blanks<plan.blankPad);
+      if(better.length){
+        const best = better[0];
+        const bestLabel = best.sigSize===null ? 'one single signature (no value set)' : best.sigSize+' pages per signature';
+        const blankWord = n => n+' blank page'+(n===1?'':'s');
+        html += '<div class="suggest-banner">'+
+          '<div class="suggest-icon">!</div>'+
+          '<div class="suggest-body">'+
+            '<div class="suggest-title">This will pad the last signature with '+blankWord(plan.blankPad)+'.</div>'+
+            '<div class="suggest-text">Try <b>'+bestLabel+'</b> instead'+
+              (best.blanks>0 ? ' — down to '+blankWord(best.blanks)+'.' : ' — that divides evenly with no blanks.')+
+            '</div>'+
+            (better.length>1 ? renderOtherOptions(better.slice(1,4)) : '')+
+          '</div>'+
+          '<button class="suggest-apply" data-apply-sig="'+(best.sigSize===null?'':best.sigSize)+'">Apply</button>'+
+        '</div>';
+      }
+    }
+    if(plan.coverFront){
+      html += '<div class="sig-block"><div class="sig-title">Cover sheet</div><div class="cover-card">'+
+        sheetCardHtml('Cover','front', plan.coverBack, plan.coverFront) + '</div></div>';
+    }
+    if(plan.signatures.length===0){
+      html += '<div class="empty-plan">No body pages — cover only.</div>';
+    }
+
+    // ---- thumbnail preview: every signature ----
+    plan.signatures.forEach((sheets,si)=>{
+      const label = plan.signatures.length===1 ? 'Signature' : 'Signature '+(si+1);
+      html += '<div class="sig-block"><div class="sig-title">'+label+' — preview ('+sheets.length+' sheet'+(sheets.length===1?'':'s')+')</div>'+
+        '<div class="sheets-grid" data-sig-grid="'+si+'">';
+      sheets.forEach((sh,i)=>{
+        html += '<div class="sheet-card"><div class="sheet-label">Sheet '+(i+1)+'</div>'+
+          previewFaceHtml('front', sh.front.left, sh.front.right) +
+          previewFaceHtml('back', sh.back.left, sh.back.right) +
+          '</div>';
+      });
+      html += '</div></div>';
+    });
+
+    planBody.innerHTML = html;
+
+    plan.signatures.forEach((sheets,si)=>{
+      renderPreviewThumbnails(sheets, si, myToken);
+    });
+    if(plan.signatures[0]){
+      scheduleRealPreview(plan, plan.signatures[0]);
+      showRealPreviewTab();
+    } else {
+      hideRealPreviewTab();
+    }
+  }
+
+  function sheetCardHtml(label, face, left, right){
+    const cell = v => v===null ? '<div class="cell blank">blank</div>' : '<div class="cell">'+v+'</div>';
+    return '<div class="face '+face+'"><span class="face-tag">'+(face==='front'?'FRONT':'BACK')+'</span>'+
+      cell(left)+'<div class="fold"></div>'+cell(right)+'</div>';
+  }
+
+  // Markup for a previewable face: same shell as sheetCardHtml, but each cell
+  // is a slot a thumbnail <img> gets dropped into once it's rendered.
+  function previewFaceHtml(face, left, right){
+    const cell = v => v===null
+      ? '<div class="cell blank">blank</div>'
+      : '<div class="cell thumb-cell" data-page="'+v+'"><span class="thumb-pagenum">'+v+'</span></div>';
+    return '<div class="face '+face+' preview-face"><span class="face-tag">'+(face==='front'?'FRONT':'BACK')+'</span>'+
+      cell(left)+'<div class="fold"></div>'+cell(right)+'</div>';
+  }
+
+  async function renderPreviewThumbnails(sheets, sigIndex, myToken){
+    if(!pdfjsDoc) return; // pdf.js unavailable or still loading — numbers-only fallback stays
+    const grid = document.querySelector('[data-sig-grid="'+sigIndex+'"]');
+    if(!grid) return;
+
+    const neededPages = new Set();
+    sheets.forEach(sh=>{
+      [sh.front.left, sh.front.right, sh.back.left, sh.back.right].forEach(p=>{
+        if(p!==null) neededPages.add(p);
+      });
+    });
+
+    for(const pageNum of neededPages){
+      if(myToken !== previewToken) return; // settings changed mid-render, abort
+      const cells = grid.querySelectorAll('.thumb-cell[data-page="'+pageNum+'"]');
+      if(!cells.length) continue;
+
+      let dataUrl = pageImgCache.get(pageNum);
+      if(!dataUrl){
+        try{
+          dataUrl = await renderPageToDataUrl(pageNum);
+          pageImgCache.set(pageNum, dataUrl);
+        }catch(e){
+          console.warn('Could not render preview for page', pageNum, e);
+          continue;
+        }
+      }
+      if(myToken !== previewToken) return;
+      cells.forEach(c=>{
+        if(c.querySelector('img')) return; // already filled
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        img.className = 'thumb-img';
+        c.appendChild(img);
+      });
+    }
+  }
+
+  async function renderPageToDataUrl(pageNum){
+    const page = await pdfjsDoc.getPage(pageNum);
+    const baseViewport = page.getViewport({scale:1});
+
+    // pdf.js's own viewport always covers the page's full CropBox (falling
+    // back to MediaBox) — there's no way to ask it to render just the
+    // TrimBox. Many print-ready PDFs have registration marks, crop marks,
+    // and color bars in the margin between TrimBox and MediaBox, so without
+    // clipping, this quick preview can show them even though the real
+    // export (which clips to TrimBox via embedBoundsFor) does not. We
+    // render the full page, then crop the canvas down to the TrimBox
+    // fraction of it, so this preview matches what actually gets exported.
+    const srcPage = (srcDoc && srcDoc.getPageCount()>=pageNum) ? srcDoc.getPage(pageNum-1) : null;
+    let cropFrac = null; // {x,y,w,h} as 0..1 fractions of the full rendered page
+    if(srcPage){
+      try{
+        const full = srcPage.getMediaBox();
+        const trim = trimBoxFor(srcPage);
+        if(full.width>0 && full.height>0){
+          cropFrac = {
+            x: (trim.x - full.x) / full.width,
+            y: (trim.y - full.y) / full.height,
+            w: trim.width / full.width,
+            h: trim.height / full.height
+          };
+          // No-op (or invalid) crop — skip clipping rather than risk an
+          // empty/garbled thumbnail from bad box data.
+          if(cropFrac.w<=0 || cropFrac.h<=0 || cropFrac.w>1.001 || cropFrac.h>1.001) cropFrac = null;
+        }
+      }catch(e){ cropFrac = null; }
+    }
+
+    const landscape = baseViewport.width > baseViewport.height;
+    // The real export rotates a landscape page 270° to fit the portrait
+    // half-slot (see placeInBox) whenever auto-rotate is on. Skipping that
+    // here made the quick thumbnail render the page at its raw, un-rotated
+    // size — which can look much larger or a totally different shape than
+    // what actually lands in the file, especially when the other half of
+    // the spread isn't rotated.
+    const rotate = $('autoRotate').checked && landscape;
+    const viewport = page.getViewport({scale:1, rotation: rotate ? 270 : 0});
+    const targetW = 200; // render a bit larger than the on-screen slot for crispness
+    const scale = targetW / viewport.width;
+    const scaledViewport = page.getViewport({scale, rotation: rotate ? 270 : 0});
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = Math.ceil(scaledViewport.width);
+    fullCanvas.height = Math.ceil(scaledViewport.height);
+    const fullCtx = fullCanvas.getContext('2d');
+    await page.render({canvasContext: fullCtx, viewport: scaledViewport}).promise;
+
+    if(!cropFrac) return fullCanvas.toDataURL('image/png');
+
+    // cropFrac is expressed in PDF page space (x,y from bottom-left). The
+    // rendered canvas is in screen space, and a 270° rotation maps PDF-space
+    // y onto canvas x (inverted) and PDF-space x onto canvas y (inverted) —
+    // i.e. canvasX = mediaTop - pdfY, canvasY = mediaRight - pdfX. Working
+    // that through in box-fraction terms gives the formulas below (verified
+    // against pdf.js's rotation transform directly, including asymmetric
+    // margins on all four sides).
+    const cw = fullCanvas.width, ch = fullCanvas.height;
+    const fx = rotate ? (1 - cropFrac.y - cropFrac.h) : cropFrac.x;
+    const fy = rotate ? (1 - cropFrac.x - cropFrac.w) : (1 - cropFrac.y - cropFrac.h);
+    const fw = rotate ? cropFrac.h : cropFrac.w;
+    const fh = rotate ? cropFrac.w : cropFrac.h;
+    const sx = Math.round(fx*cw), sy = Math.round(fy*ch);
+    const sw = Math.max(1, Math.round(fw*cw)), sh = Math.max(1, Math.round(fh*ch));
+
+    const cropCanvas = document.createElement('canvas');
+    cropCanvas.width = sw; cropCanvas.height = sh;
+    cropCanvas.getContext('2d').drawImage(fullCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+    return cropCanvas.toDataURL('image/png');
+  }
+
+  // Small fixed inset used for cutting marks — these just flag a trim guide
+  // near the sheet's own edge, since we're imposing already-finished PDF
+  // pages rather than bleed-extended artwork.
+  const CUT_MARK_INSET_PT = 3*MM;
+
+  // Reads the chosen sheet size (or custom W/H) and returns it in points,
+  // oriented landscape — the sheet always prints flat and wider-than-tall so
+  // the two half-page slots in boxesFor() can sit side by side, then fold in
+  // half down the middle.
+  function ptSize(){
+    let wmm, hmm;
+    if($('sheetSize').value === 'CUSTOM'){
+      wmm = parseFloat($('customW').value) || 210;
+      hmm = parseFloat($('customH').value) || 297;
+    } else {
+      const wh = SIZES[$('sheetSize').value] || SIZES.A4;
+      wmm = wh[0]; hmm = wh[1];
+    }
+    if(hmm > wmm){ const t = wmm; wmm = hmm; hmm = t; } // force landscape
+    return { w: wmm*MM, h: hmm*MM };
+  }
+
+  function readSettings(){
+    const sheetWH = ptSize();
+    const doCutMarks = $('cutMarks').checked;
+    // When cutting marks are on, the exported page is grown by the inset on
+    // every side and the live content is shifted inward by that same amount,
+    // so the marks live in genuinely extra paper instead of overlapping the
+    // file's own content.
+    const inset = doCutMarks ? CUT_MARK_INSET_PT : 0;
+    return {
+      sheetWH,
+      pageWH: { w: sheetWH.w + inset*2, h: sheetWH.h + inset*2 },
+      contentOffset: inset,
+      marginPt: (parseFloat($('marginMm').value)||0)*MM,
+      gutterPt: (parseFloat($('gutterMm').value)||0)*MM,
+      doPageNum: $('pageNumbers').checked,
+      doMarks: $('foldMarks').checked,
+      doCutMarks,
+      doRotate: $('autoRotate').checked,
+      doCreep: $('creep').checked,
+      creepMaxPt: (parseFloat($('creepMax').value)||0)*MM,
+      manualDuplex: $('manualDuplex').checked
+    };
+  }
+
+  function boxesFor(cfg){
+    const ox = cfg.contentOffset, oy = cfg.contentOffset;
+    const slotW = (cfg.sheetWH.w - cfg.marginPt*2 - cfg.gutterPt)/2;
+    const slotH = cfg.sheetWH.h - cfg.marginPt*2;
+    return {
+      left:{x:ox+cfg.marginPt,y:oy+cfg.marginPt,w:slotW,h:slotH},
+      right:{x:ox+cfg.marginPt+slotW+cfg.gutterPt,y:oy+cfg.marginPt,w:slotW,h:slotH}
+    };
+  }
+
+  async function placeInBox(pg, ep, box, rotate){
+    const w = ep.width, h = ep.height;
+    const landscape = w > h;
+    if(rotate && landscape){
+      const scale = Math.min(box.w/h, box.h/w);
+      const x = box.x + (box.w - h*scale)/2;
+      const y = box.y + (box.h + w*scale)/2;
+      pg.drawPage(ep, {x,y,xScale:scale,yScale:scale,rotate:degrees(270)});
+    } else {
+      const scale = Math.min(box.w/w, box.h/h);
+      const x = box.x + (box.w - w*scale)/2;
+      const y = box.y + (box.h - h*scale)/2;
+      pg.drawPage(ep, {x,y,xScale:scale,yScale:scale});
+    }
+  }
+
+  // Draws one face (front or back) of one sheet, using the exact same logic
+  // as the real export. `getEmbedded(targetDoc, pageNum)` resolves an embedded
+  // page handle for `pageNum` inside `doc` — caller supplies this so it can be
+  // cached per-document.
+  async function drawFace(cfg, doc, pg, fontRef, left, right, sheetIndex, totalSheetsInSig, isCover, getEmbedded){
+    const bx = boxesFor(cfg);
+    const creepShift = (cfg.doCreep && totalSheetsInSig>1)
+      ? cfg.creepMaxPt * (sheetIndex/(totalSheetsInSig-1)) : 0;
+
+    const leftBox = {...bx.left, x: bx.left.x + creepShift};
+    const rightBox = {...bx.right, x: bx.right.x - creepShift};
+
+    for(const [pageNum, box] of [[left,leftBox],[right,rightBox]]){
+      if(pageNum===null) continue;
+      const ep = await getEmbedded(doc, pageNum);
+      await placeInBox(pg, ep, box, cfg.doRotate);
+      if(cfg.doPageNum && !isCover){
+        pg.drawText(String(pageNum), {
+          x: box.x + box.w/2 - 5, y: box.y + 6, size: 8, font: fontRef, color: rgb(0.13,0.12,0.10)
+        });
+      }
+    }
+    if(cfg.doMarks){
+      const ox = cfg.contentOffset, oy = cfg.contentOffset;
+      pg.drawLine({
+        start:{x:ox+cfg.sheetWH.w/2,y:oy}, end:{x:ox+cfg.sheetWH.w/2,y:oy+cfg.sheetWH.h},
+        thickness:0.6, color: rgb(0.6,0.57,0.5), dashArray:[3,3]
+      });
+    }
+    if(cfg.doCutMarks){
+      drawCornerCutMarks(pg, cfg.contentOffset, cfg.sheetWH.w, cfg.sheetWH.h);
+    }
+  }
+
+  // Corner trim marks. The page has already been grown by `inset` on every
+  // side (see readSettings/pageWH), with the real content shifted inward by
+  // that same amount — so the trim box (the file's actual edge) sits at
+  // (offset, offset) to (offset+w, offset+h). Marks are drawn OUTSIDE that
+  // trim box, in the extra paper, the way real print-shop crop marks work:
+  // a short line running from the trim point out to the sheet edge, with a
+  // small gap so the mark never touches the trim line itself.
+  function drawCornerCutMarks(pg, offset, w, h){
+    const inset = offset;
+    if(inset<=0) return; // no expanded margin to draw into
+    const gap = Math.min(1*MM, inset*0.3);
+    const len = Math.max(0, inset-gap);
+    if(len<=0) return;
+    const color = rgb(0.13,0.12,0.10), thickness = 0.6;
+    const line = (x1,y1,x2,y2)=>pg.drawLine({start:{x:x1,y:y1},end:{x:x2,y:y2},thickness,color});
+
+    const pageW = w + inset*2, pageH = h + inset*2;
+    const left = offset, right = offset+w, bottom = offset, top = offset+h;
+
+    // bottom-left trim corner
+    line(0, bottom, left-gap, bottom);
+    line(left, 0, left, bottom-gap);
+    // bottom-right trim corner
+    line(right+gap, bottom, pageW, bottom);
+    line(right, 0, right, bottom-gap);
+    // top-left trim corner
+    line(0, top, left-gap, top);
+    line(left, top+gap, left, pageH);
+    // top-right trim corner
+    line(right+gap, top, pageW, top);
+    line(right, top+gap, right, pageH);
+  }
+
+  // Many print-ready PDFs (especially ones exported from prepress/design
+  // software) have a MediaBox larger than the actual page content, with
+  // round registration marks, crop marks, and color bars sitting in that
+  // extra margin — outside the TrimBox but still inside the MediaBox.
+  // embedPage() embeds the full MediaBox by default, so without this those
+  // marks get pulled in too and shrunk onto every single output page. The
+  // TrimBox (falling back to CropBox, then MediaBox) is the actual intended
+  // page area, so that's what gets embedded instead.
+  function trimBoxFor(page){
+    try{
+      const box = page.getTrimBox ? page.getTrimBox() : null;
+      if(box && box.width>0 && box.height>0) return box;
+    }catch(e){}
+    try{
+      const box = page.getCropBox ? page.getCropBox() : null;
+      if(box && box.width>0 && box.height>0) return box;
+    }catch(e){}
+    return page.getMediaBox();
+  }
+  function embedBoundsFor(page){
+    const b = trimBoxFor(page);
+    return { left:b.x, bottom:b.y, right:b.x+b.width, top:b.y+b.height };
+  }
+
+  // Builds a tiny real PDF — using the exact same drawFace/boxesFor logic as
+  // the actual export — containing only the cover (if any) and the first
+  // signature's sheets, front then back, in viewing order. This is what gets
+  // rasterized for the "real preview".
+  async function buildRealPreviewPdf(plan, firstSig){
+    const cfg = readSettings();
+    const out = await PDFDocument.create();
+    const font = await out.embedFont(StandardFonts.Helvetica);
+    const embedCache = new Map();
+    async function getEmbedded(targetDoc, pageNum){
+      if(embedCache.has(pageNum)) return embedCache.get(pageNum);
+      const srcPage = srcDoc.getPage(pageNum-1);
+      const ep = await targetDoc.embedPage(srcPage, embedBoundsFor(srcPage));
+      embedCache.set(pageNum, ep);
+      return ep;
+    }
+
+    const pages = []; // {label} parallel array describing each output page
+    if(plan.coverFront){
+      const pg = out.addPage([cfg.pageWH.w, cfg.pageWH.h]);
+      await drawFace(cfg, out, pg, font, plan.coverBack, plan.coverFront, 0, 1, true, getEmbedded);
+      pages.push({sheet:'Cover', face:'front'});
+    }
+    for(let k=0;k<firstSig.length;k++){
+      const sh = firstSig[k];
+      const pf = out.addPage([cfg.pageWH.w, cfg.pageWH.h]);
+      await drawFace(cfg, out, pf, font, sh.front.left, sh.front.right, k, firstSig.length, false, getEmbedded);
+      pages.push({sheet:k+1, face:'front'});
+      const pb = out.addPage([cfg.pageWH.w, cfg.pageWH.h]);
+      await drawFace(cfg, out, pb, font, sh.back.left, sh.back.right, k, firstSig.length, false, getEmbedded);
+      pages.push({sheet:k+1, face:'back'});
+    }
+    const bytes = await out.save();
+    return {bytes, pages};
+  }
+
+  // ---- real export: full, downloadable, print-ready PDF(s) ----
+  // All signatures always combine into a single body file — a job isn't
+  // split per-signature. The file count only grows for two independent
+  // reasons: a separate cover prints on different stock so it gets its own
+  // file, and manual duplex needs the backs printed as a separate pass so
+  // the body itself splits into a fronts file and a backs file. Cover (1) +
+  // fronts/backs (2) is the most files a single export ever produces.
+  function setExportStatus(msg, busy, kind){
+    const el = $('exportStatus');
+    if(!el) return;
+    el.textContent = msg;
+    el.classList.toggle('is-error', kind==='error');
+    el.classList.toggle('is-done', kind==='done');
+  }
+
+  // Returns an embed function shared across however many output PDFDocuments
+  // a single export needs (e.g. a fronts file + a backs file for manual
+  // duplex) — embedded page handles are cached per target document, since a
+  // handle embedded into one PDFDocument can't be reused in another.
+  function makeEmbedder(){
+    const perDoc = new Map();
+    return async function getEmbedded(targetDoc, pageNum){
+      let cache = perDoc.get(targetDoc);
+      if(!cache){ cache = new Map(); perDoc.set(targetDoc, cache); }
+      if(cache.has(pageNum)) return cache.get(pageNum);
+      const srcPage = srcDoc.getPage(pageNum-1);
+      const ep = await targetDoc.embedPage(srcPage, embedBoundsFor(srcPage));
+      cache.set(pageNum, ep);
+      return ep;
+    };
+  }
+
+  // Builds the export. Returns {cover, body} where:
+  //   cover — bytes for the separate cover file, or null if there isn't one
+  //   body  — null if there are no body signatures, otherwise either
+  //           {mode:'single', bytes} (all signatures interleaved front/back
+  //           in one file) or {mode:'duplex', fronts, backs} (manual duplex:
+  //           every signature's fronts in one file, backs in another)
+  async function buildExport(cfg, plan){
+    const getEmbedded = makeEmbedder();
+    const result = {cover: null, body: null};
+
+    if(plan.coverFront){
+      const out = await PDFDocument.create();
+      const font = await out.embedFont(StandardFonts.Helvetica);
+      const pg = out.addPage([cfg.pageWH.w, cfg.pageWH.h]);
+      await drawFace(cfg, out, pg, font, plan.coverBack, plan.coverFront, 0, 1, true, getEmbedded);
+      result.cover = await out.save();
+    }
+
+    if(plan.signatures.length>0){
+      if(!cfg.manualDuplex){
+        const out = await PDFDocument.create();
+        const font = await out.embedFont(StandardFonts.Helvetica);
+        for(const sheets of plan.signatures){
+          for(let k=0;k<sheets.length;k++){
+            const sh = sheets[k];
+            const pf = out.addPage([cfg.pageWH.w, cfg.pageWH.h]);
+            await drawFace(cfg, out, pf, font, sh.front.left, sh.front.right, k, sheets.length, false, getEmbedded);
+            const pb = out.addPage([cfg.pageWH.w, cfg.pageWH.h]);
+            await drawFace(cfg, out, pb, font, sh.back.left, sh.back.right, k, sheets.length, false, getEmbedded);
+          }
+        }
+        result.body = {mode:'single', bytes: await out.save()};
+      } else {
+        const outF = await PDFDocument.create();
+        const outB = await PDFDocument.create();
+        const fontF = await outF.embedFont(StandardFonts.Helvetica);
+        const fontB = await outB.embedFont(StandardFonts.Helvetica);
+        for(const sheets of plan.signatures){
+          for(let k=0;k<sheets.length;k++){
+            const sh = sheets[k];
+            const pf = outF.addPage([cfg.pageWH.w, cfg.pageWH.h]);
+            await drawFace(cfg, outF, pf, fontF, sh.front.left, sh.front.right, k, sheets.length, false, getEmbedded);
+            const pb = outB.addPage([cfg.pageWH.w, cfg.pageWH.h]);
+            await drawFace(cfg, outB, pb, fontB, sh.back.left, sh.back.right, k, sheets.length, false, getEmbedded);
+          }
+        }
+        result.body = {mode:'duplex', fronts: await outF.save(), backs: await outB.save()};
+      }
+    }
+    return result;
+  }
+
+  function downloadBytes(bytes, filename){
+    const blob = new Blob([bytes], {type:'application/pdf'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  }
+
+  function formatBytes(n){
+    if(n < 1024*1024) return Math.max(1, Math.round(n/1024))+' KB';
+    return (n/(1024*1024)).toFixed(1)+' MB';
+  }
+
+  // ---------- export modal ----------
+  const exportModal = $('exportModal'), exportModalBody = $('exportModalBody'),
+        exportModalSub = $('exportModalSub'), exportAllBtn = $('exportAllBtn');
+  let exportModalFiles = []; // {bytes, filename}
+  let exportBase = 'booklet'; // base filename (without extension), used for the zip name
+
+  function openExportModal(files, label, base){
+    exportModalFiles = files;
+    exportBase = base || 'booklet';
+    exportModalSub.textContent = label;
+    exportModalBody.innerHTML = '';
+    files.forEach((d,i)=>{
+      const row = document.createElement('div');
+      row.className = 'export-file-row';
+      const info = document.createElement('div');
+      info.className = 'export-file-info';
+      const name = document.createElement('div');
+      name.className = 'export-file-name';
+      name.textContent = d.filename;
+      const meta = document.createElement('div');
+      meta.className = 'export-file-meta';
+      meta.textContent = formatBytes(d.bytes.byteLength || d.bytes.length || 0)+' · PDF';
+      info.appendChild(name); info.appendChild(meta);
+      const dl = document.createElement('button');
+      dl.className = 'export-file-dl';
+      dl.type = 'button';
+      dl.textContent = 'Download';
+      dl.addEventListener('click', ()=>{
+        downloadBytes(d.bytes, d.filename);
+        dl.textContent = 'Downloaded';
+        dl.classList.add('is-done');
+      });
+      row.appendChild(info); row.appendChild(dl);
+      exportModalBody.appendChild(row);
+    });
+    exportAllBtn.textContent = files.length>1 ? 'Download all as .zip ('+files.length+' files)' : 'Download file';
+    exportModal.classList.add('is-open');
+    exportModal.setAttribute('aria-hidden','false');
+  }
+  function closeExportModal(){
+    exportModal.classList.remove('is-open');
+    exportModal.setAttribute('aria-hidden','true');
+  }
+  $('exportModalClose').addEventListener('click', closeExportModal);
+  exportModal.addEventListener('click', e=>{ if(e.target===exportModal) closeExportModal(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape' && exportModal.classList.contains('is-open')) closeExportModal();
+  });
+  exportAllBtn.addEventListener('click', async ()=>{
+    if(exportModalFiles.length===0) return;
+    if(exportModalFiles.length===1){
+      downloadBytes(exportModalFiles[0].bytes, exportModalFiles[0].filename);
+      const rows = exportModalBody.querySelectorAll('.export-file-dl');
+      if(rows[0]){ rows[0].textContent='Downloaded'; rows[0].classList.add('is-done'); }
+      return;
+    }
+    if(typeof JSZip === 'undefined'){
+      // JSZip failed to load (offline, blocked CDN, etc.) — fall back to the
+      // old staggered-download behavior rather than leaving the button dead.
+      exportModalFiles.forEach((d,i)=>{
+        setTimeout(()=>{
+          downloadBytes(d.bytes, d.filename);
+          const rows = exportModalBody.querySelectorAll('.export-file-dl');
+          if(rows[i]){ rows[i].textContent='Downloaded'; rows[i].classList.add('is-done'); }
+        }, i*250);
+      });
+      return;
+    }
+    const prevText = exportAllBtn.textContent;
+    exportAllBtn.disabled = true;
+    exportAllBtn.textContent = 'Zipping…';
+    try{
+      const zip = new JSZip();
+      exportModalFiles.forEach(d=>zip.file(d.filename, d.bytes));
+      const zipBlob = await zip.generateAsync({type:'blob', compression:'DEFLATE'});
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url; a.download = exportBase+'.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+      exportAllBtn.textContent = 'Downloaded';
+      exportModalBody.querySelectorAll('.export-file-dl').forEach(btn=>{
+        btn.textContent = 'Downloaded'; btn.classList.add('is-done');
+      });
+    }catch(err){
+      console.error('Zip failed:', err);
+      exportAllBtn.textContent = prevText;
+      exportAllBtn.disabled = false;
+      return;
+    }
+    exportAllBtn.disabled = false;
+  });
+
+  $('exportBtn').addEventListener('click', async ()=>{
+    const plan = buildPlan();
+    if(!plan || (plan.signatures.length===0 && !plan.coverFront)){
+      setExportStatus('Nothing to export yet — upload a PDF first.', false, 'error');
+      return;
+    }
+    const cfg = readSettings();
+    const base = (srcFile && srcFile.name ? srcFile.name.replace(/\.pdf$/i,'') : 'booklet');
+    const btn = $('exportBtn');
+    btn.disabled = true;
+    setExportStatus('Building export…', true);
+
+    try{
+      const result = await buildExport(cfg, plan);
+      const downloads = []; // {bytes, filename} — presented in the export
+                             // modal so the user downloads each file with its
+                             // own tap, instead of relying on staggered
+                             // auto-downloads that browsers often block after
+                             // the first file.
+      if(result.cover){
+        downloads.push({bytes: result.cover, filename: base+'-cover.pdf'});
+      }
+      if(result.body){
+        if(result.body.mode==='single'){
+          downloads.push({bytes: result.body.bytes, filename: base+(result.cover?'-body':'')+'.pdf'});
+        } else {
+          downloads.push({bytes: result.body.fronts, filename: base+'-fronts.pdf'});
+          downloads.push({bytes: result.body.backs, filename: base+'-backs.pdf'});
+        }
+      }
+      const label = downloads.length===1
+        ? '1 file built — download it below.'
+        : downloads.length+' files built — download each below.';
+      openExportModal(downloads, label, base);
+      setExportStatus('Done — '+downloads.length+' file'+(downloads.length===1?'':'s')+' ready.', false, 'done');
+    }catch(err){
+      console.error('Export failed:', err);
+      setExportStatus('Export failed: '+(err.message||err), false, 'error');
+    }finally{
+      btn.disabled = false;
+    }
+  });
+  const rpTab = $('realPreviewTab'), rpDrawer = $('realPreviewDrawer');
+  let rpDrawerManuallyClosed = false;
+
+  function showRealPreviewTab(){
+    rpTab.style.display = 'block';
+  }
+  function hideRealPreviewTab(){
+    rpTab.style.display = 'none';
+    closeRealPreviewDrawer();
+  }
+  function openRealPreviewDrawer(){
+    rpTab.classList.add('is-open');
+    rpDrawer.classList.add('is-open');
+    rpDrawerManuallyClosed = false;
+  }
+  function closeRealPreviewDrawer(){
+    rpTab.classList.remove('is-open');
+    rpDrawer.classList.remove('is-open');
+  }
+  function toggleRealPreviewDrawer(){
+    if(rpDrawer.classList.contains('is-open')){
+      rpDrawerManuallyClosed = true;
+      closeRealPreviewDrawer();
+    } else {
+      openRealPreviewDrawer();
+    }
+  }
+  rpTab.addEventListener('click', toggleRealPreviewDrawer);
+  $('realPreviewDrawerClose').addEventListener('click', ()=>{
+    rpDrawerManuallyClosed = true;
+    closeRealPreviewDrawer();
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape' && rpDrawer.classList.contains('is-open')) {
+      rpDrawerManuallyClosed = true;
+      closeRealPreviewDrawer();
+    }
+  });
+
+  let realPreviewDoc = null; // pdf.js doc for the rendered preview PDF
+  let realPreviewToken = 0;
+  let realPreviewBusy = false;
+  let realPreviewPending = false;
+  let realPreviewEverShown = false;
+
+  function scheduleRealPreview(plan, firstSig){
+    if(realPreviewBusy){ realPreviewPending = {plan, firstSig}; return; }
+    runRealPreview(plan, firstSig);
+  }
+
+  async function runRealPreview(plan, firstSig){
+    const grid = $('realPreviewGrid');
+    if(!grid) return;
+    if(!window.pdfjsLib){
+      grid.innerHTML = '<div class="empty-plan">Real preview needs pdf.js, which did not load.</div>';
+      return;
+    }
+    realPreviewBusy = true;
+    realPreviewToken++;
+    const myToken = realPreviewToken;
+    const statusEl = $('realPreviewStatus');
+    if(statusEl) statusEl.textContent = 'Rendering…';
+
+    try{
+      const {bytes, pages} = await buildRealPreviewPdf(plan, firstSig);
+      if(myToken !== realPreviewToken) return;
+
+      const doc = await pdfjsLib.getDocument({data: bytes}).promise;
+      if(myToken !== realPreviewToken) return;
+      realPreviewDoc = doc;
+
+      grid.innerHTML = '';
+      for(let i=0;i<pages.length;i++){
+        if(myToken !== realPreviewToken) return;
+        const meta = pages[i];
+        const card = document.createElement('div');
+        card.className = 'real-sheet-card';
+        const label = document.createElement('div');
+        label.className = 'real-sheet-label';
+        label.textContent = (meta.sheet==='Cover' ? 'Cover' : 'Sheet '+meta.sheet)+' · '+meta.face.toUpperCase();
+        card.appendChild(label);
+        const canvasWrap = document.createElement('div');
+        canvasWrap.className = 'real-canvas-wrap';
+        card.appendChild(canvasWrap);
+        grid.appendChild(card);
+
+        const page = await doc.getPage(i+1);
+        const viewport = page.getViewport({scale:1});
+        const targetW = 360;
+        const scale = targetW / viewport.width;
+        const scaledViewport = page.getViewport({scale});
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(scaledViewport.width);
+        canvas.height = Math.ceil(scaledViewport.height);
+        canvasWrap.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        await page.render({canvasContext: ctx, viewport: scaledViewport}).promise;
+        canvas.addEventListener('click', ()=>openRealPreviewLightbox(i, pages));
+      }
+      if(statusEl) statusEl.textContent = pages.length+' page'+(pages.length===1?'':'s')+' rendered · click a page to enlarge';
+      if(!realPreviewEverShown && !rpDrawerManuallyClosed){
+        openRealPreviewDrawer();
+      }
+      realPreviewEverShown = true;
+    }catch(err){
+      console.error('Real preview failed:', err);
+      if(myToken === realPreviewToken && statusEl) statusEl.textContent = 'Could not render preview: '+(err.message||err);
+    }finally{
+      realPreviewBusy = false;
+      if(realPreviewPending){
+        const next = realPreviewPending; realPreviewPending = false;
+        runRealPreview(next.plan, next.firstSig);
+      }
+    }
+  }
+
+  async function openRealPreviewLightbox(pageIndex, pages){
+    if(!realPreviewDoc) return;
+    let lb = $('realPreviewLightbox');
+    if(!lb){
+      lb = document.createElement('div');
+      lb.id = 'realPreviewLightbox';
+      lb.className = 'rp-lightbox';
+      lb.innerHTML = '<div class="rp-lightbox-inner">'+
+        '<button class="rp-lb-close" id="rpLbClose" aria-label="Close">&times;</button>'+
+        '<button class="rp-lb-nav rp-lb-prev" id="rpLbPrev" aria-label="Previous">&#8249;</button>'+
+        '<div class="rp-lb-canvas-wrap"><canvas id="rpLbCanvas"></canvas></div>'+
+        '<button class="rp-lb-nav rp-lb-next" id="rpLbNext" aria-label="Next">&#8250;</button>'+
+        '<div class="rp-lb-label" id="rpLbLabel"></div>'+
+        '</div>';
+      document.body.appendChild(lb);
+      lb.addEventListener('click', e=>{ if(e.target===lb) closeLightbox(); });
+      $('rpLbClose').addEventListener('click', closeLightbox);
+      $('rpLbPrev').addEventListener('click', ()=>renderLightboxPage(Math.max(0,lbIndex-1), pages));
+      $('rpLbNext').addEventListener('click', ()=>renderLightboxPage(Math.min(pages.length-1,lbIndex+1), pages));
+      document.addEventListener('keydown', lbKeyHandler);
+    }
+    lb.style.display = 'flex';
+    await renderLightboxPage(pageIndex, pages);
+  }
+  let lbIndex = 0;
+  function closeLightbox(){
+    const lb = $('realPreviewLightbox');
+    if(lb) lb.style.display = 'none';
+  }
+  function lbKeyHandler(e){
+    const lb = $('realPreviewLightbox');
+    if(!lb || lb.style.display==='none') return;
+    if(e.key==='Escape') closeLightbox();
+    if(e.key==='ArrowLeft') $('rpLbPrev').click();
+    if(e.key==='ArrowRight') $('rpLbNext').click();
+  }
+  async function renderLightboxPage(pageIndex, pages){
+    if(!realPreviewDoc) return;
+    lbIndex = pageIndex;
+    const meta = pages[pageIndex];
+    $('rpLbLabel').textContent = (meta.sheet==='Cover' ? 'Cover' : 'Sheet '+meta.sheet)+' · '+meta.face.toUpperCase()+
+      '  ('+(pageIndex+1)+' / '+pages.length+')';
+    const page = await realPreviewDoc.getPage(pageIndex+1);
+    const viewport = page.getViewport({scale:1});
+    // Fit to BOTH available width and height — using width alone (the old
+    // behavior) let a page taller than it is wide render past the 80vh box,
+    // pushing its bottom off the edge of the screen with nothing to scroll
+    // it into view (the lightbox has no page-level scroll).
+    const maxW = Math.min(900, window.innerWidth*0.8);
+    const maxH = window.innerHeight*0.75; // leaves room for the label + close/nav chrome
+    const scale = Math.min(maxW/viewport.width, maxH/viewport.height);
+    const scaledViewport = page.getViewport({scale});
+    const canvas = $('rpLbCanvas');
+    canvas.width = Math.ceil(scaledViewport.width);
+    canvas.height = Math.ceil(scaledViewport.height);
+    const ctx = canvas.getContext('2d');
+    await page.render({canvasContext: ctx, viewport: scaledViewport}).promise;
+  }
+
+})();
+
+</script>
